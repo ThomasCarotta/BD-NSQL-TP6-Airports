@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:5.0
+    container_name: aeropuerto-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: aeropuerto-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+
+  backend-carga:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aeropuerto-carga
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - .:/app
+    command: ["python", "scripts/cargar_datos.py"]
+
+  django-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aeropuerto-django
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+volumes:
+  mongo_data:
+  redis_data:
