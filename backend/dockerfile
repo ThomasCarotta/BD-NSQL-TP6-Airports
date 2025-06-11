@@ -1,0 +1,16 @@
+# backend/Dockerfile
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Copiar solo requirements primero para cachear la instalación
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r ./requirements.txt
+
+# Copiar el resto del código
+COPY . .
+
+# Puerto expuesto (solo documentación, el mapeo real está en compose)
+EXPOSE 8000
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

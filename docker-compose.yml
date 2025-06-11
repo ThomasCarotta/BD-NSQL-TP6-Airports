@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mongo:
     image: mongo:5.0
@@ -11,6 +9,11 @@ services:
       - "27018:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:6.2-alpine
@@ -19,32 +22,53 @@ services:
       - "6380:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  backend-carga:
+  carga-datos:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: backend/Dockerfile
     container_name: aeropuerto-carga
     depends_on:
-      - mongo
-      - redis
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - .:/app
     command: ["python", "scripts/cargar_datos.py"]
+    restart: "no"
 
   django-backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: aeropuerto-django
     depends_on:
       - mongo
       - redis
     volumes:
-      - .:/app
+      - ./backend:/app
     ports:
       - "8000:8000"
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    environment:
+      - DEBUG=1
+      - MONGO_URI=mongodb://admin:admin123@mongo:27017
+      - REDIS_URL=redis://redis:6379
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aeropuerto-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - django-backend
 
 volumes:
   mongo_data:
