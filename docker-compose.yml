@@ -30,8 +30,8 @@ services:
 
   carga-datos:
     build:
-      context: ./backend
-      dockerfile: backend/Dockerfile
+      context: .
+      dockerfile: dockerfile
     container_name: aeropuerto-carga
     depends_on:
       mongo:
@@ -45,14 +45,14 @@ services:
 
   django-backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: dockerfile
     container_name: aeropuerto-django
     depends_on:
       - mongo
       - redis
     volumes:
-      - ./backend:/app
+      - .:/app
     ports:
       - "8000:8000"
     environment:
@@ -66,9 +66,11 @@ services:
       dockerfile: Dockerfile
     container_name: aeropuerto-frontend
     ports:
-      - "5173:80"
-    depends_on:
-      - django-backend
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+    stdin_open: true
+    tty: true
 
 volumes:
   mongo_data:
