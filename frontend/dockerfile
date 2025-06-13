@@ -2,11 +2,9 @@ FROM node:18
 
 WORKDIR /app
 
-# Cachear dependencias primero
 COPY package*.json ./
 RUN npm install
 
-# Luego copiar el resto del código
 COPY . .
 
 EXPOSE 5173

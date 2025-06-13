@@ -22,7 +22,7 @@ export default function AirportMap() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/airports")
+      .get("http://django-backend:8000/airports")
       .then((res) => setAirports(res.data))
       .catch((err) => console.error("Error al obtener aeropuertos:", err));
   }, []);
