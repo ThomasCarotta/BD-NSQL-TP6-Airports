@@ -3,10 +3,11 @@ import AirportMap from "./components/AirportMap";
 
 function App() {
   return (
-    <div className="app-container">
+    <div style={{ height: "100vh", margin: 0 }}>
       <AirportMap />
     </div>
   );
 }
+
 
 export default App;

@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import axios from "axios";
 import L from "leaflet";
+
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -21,9 +22,13 @@ export default function AirportMap() {
   const [popupData, setPopupData] = useState({});
 
   useEffect(() => {
+    console.log("Cargando aeropuertos...");
     axios
       .get("http://localhost:8000/airports")
-      .then((res) => setAirports(res.data))
+      .then((res) => {
+        console.log("Aeropuertos cargados:", res.data);
+        setAirports(res.data);
+      })
       .catch((err) => console.error("Error al obtener aeropuertos:", err));
   }, []);
 
@@ -46,7 +51,7 @@ export default function AirportMap() {
       center={[0, 0]}
       zoom={2}
       scrollWheelZoom={true}
-      style={{ height: "100%", width: "100%" }}
+      style={{ height: "100vh", width: "100%" }}
     >
       <TileLayer
         attribution='&copy; OpenStreetMap contributors'
@@ -85,7 +90,7 @@ export default function AirportMap() {
             </Marker>
           );
         })}
-      </MarkerClusterGroup>
+</MarkerClusterGroup>
     </MapContainer>
   );
 }
