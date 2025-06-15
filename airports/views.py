@@ -33,11 +33,12 @@ def handle_airports(request):
             redis_client.geoadd("airports", (lng, lat, key))
         return JsonResponse({"message": "Airport created"}, status=201)
 
+
 @csrf_exempt
 @require_http_methods(["GET", "PUT", "DELETE"])
 def handle_airport_by_iata(request, iata):
     if request.method == "GET":
-        airport = collection.find_one({"iata_faa": iata}, {"_id": 0})
+        airport = collection.find_one({"$or": [{"iata_faa": iata}, {"icao": iata}]}, {"_id": 0})
         if airport:
             redis_client.zincrby(POPULARITY_KEY, 1, iata)
             redis_client.expire(POPULARITY_KEY, 86400)
@@ -56,6 +57,7 @@ def handle_airport_by_iata(request, iata):
         redis_client.zrem(POPULARITY_KEY, iata)
         redis_client.zrem("airports", iata)
         return JsonResponse({"message": "Airport deleted"})
+
 
 def get_nearby_airports(request):
     lat = float(request.GET.get("lat"))

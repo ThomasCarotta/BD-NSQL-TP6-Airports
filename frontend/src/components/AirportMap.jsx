@@ -3,13 +3,11 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import axios from "axios";
 import L from "leaflet";
-
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 
-
-// Fix para íconos de Leaflet en React
+// Fix para íconos de Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
@@ -22,28 +20,31 @@ export default function AirportMap() {
   const [popupData, setPopupData] = useState({});
 
   useEffect(() => {
-    console.log("Cargando aeropuertos...");
+    console.log("🔄 Cargando aeropuertos...");
     axios
       .get("http://localhost:8000/airports")
       .then((res) => {
-        console.log("Aeropuertos cargados:", res.data);
-        setAirports(res.data);
+        const valid = res.data.filter((a) => {
+          const lat = parseFloat(a.lat);
+          const lng = parseFloat(a.lng);
+          return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+        });
+        console.log("🗺️ Aeropuertos válidos:", valid.length);
+        setAirports(valid);
       })
-      .catch((err) => console.error("Error al obtener aeropuertos:", err));
+      .catch((err) => console.error("❌ Error al obtener aeropuertos:", err));
   }, []);
 
   const handleMarkerClick = async (iata) => {
     try {
-      const res = await axios.get(`http://localhost:8000/airports/${iata}`);
-      setPopupData((prev) => ({ ...prev, [iata]: res.data }));
+      const { data } = await axios.get(`http://localhost:8000/airports/${iata}`);
+      setPopupData((prev) => ({ ...prev, [iata]: data }));
     } catch (err) {
-      console.error("Error al obtener datos del aeropuerto:", err);
+      console.error("❌ Error al obtener datos del aeropuerto:", err);
     }
   };
 
-  const bounds = airports
-    .filter((a) => a.lat && a.lng)
-    .map((a) => [a.lat, a.lng]);
+  const bounds = airports.map((a) => [parseFloat(a.lat), parseFloat(a.lng)]);
 
   return (
     <MapContainer
@@ -60,8 +61,11 @@ export default function AirportMap() {
       <MarkerClusterGroup>
         {airports.map((airport, idx) => {
           const key = airport.iata_faa || airport.icao;
-          const { lat, lng } = airport;
-          if (!lat || !lng || !key) return null;
+          const lat = parseFloat(airport.lat);
+          const lng = parseFloat(airport.lng);
+          if (!key || isNaN(lat) || isNaN(lng)) return null;
+
+          const data = popupData[key] || airport;
 
           return (
             <Marker
@@ -72,25 +76,21 @@ export default function AirportMap() {
               }}
             >
               <Popup>
-                {popupData[key] ? (
-                  <div style={{ minWidth: "200px", lineHeight: "1.5" }}>
-                    <strong>{popupData[key].name}</strong><br />
-                    <span style={{ fontSize: "0.9em", color: "#555" }}>
-                      {popupData[key].city}<br />
-                      IATA: <strong>{popupData[key].iata_faa}</strong><br />
-                      ICAO: <strong>{popupData[key].icao}</strong><br />
-                      Altitud: {popupData[key].alt} ft<br />
-                      Zona Horaria: {popupData[key].tz}
-                    </span>
-                  </div>
-                ) : (
-                  "Cargando..."
-                )}
+                <div style={{ minWidth: "200px", lineHeight: "1.5" }}>
+                  <strong>{data.name}</strong><br />
+                  <span style={{ fontSize: "0.9em", color: "#555" }}>
+                    {data.city}<br />
+                    IATA: <strong>{data.iata_faa}</strong><br />
+                    ICAO: <strong>{data.icao}</strong><br />
+                    Altitud: {data.alt} ft<br />
+                    Zona Horaria: {data.tz}
+                  </span>
+                </div>
               </Popup>
             </Marker>
           );
         })}
-</MarkerClusterGroup>
+      </MarkerClusterGroup>
     </MapContainer>
   );
 }
