@@ -15,7 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
-export default function AirportMap() {
+export default function AirportMap({ reload }) {
   const [airports, setAirports] = useState([]);
   const [popupData, setPopupData] = useState({});
 
@@ -33,7 +33,7 @@ export default function AirportMap() {
         setAirports(valid);
       })
       .catch((err) => console.error("❌ Error al obtener aeropuertos:", err));
-  }, []);
+  }, [reload]);
 
   const handleMarkerClick = async (iata) => {
     try {
